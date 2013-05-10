@@ -1,10 +1,37 @@
 from django import http, shortcuts, template
 from django.conf import settings
 from newscenter import models
-from django.views.generic import date_based
+from django.views.generic.dates import YearArchiveView, MonthArchiveView
 from django.contrib.sites.models import Site
 from django.core.paginator import Paginator, InvalidPage, EmptyPage
 from django.shortcuts import get_object_or_404
+
+
+class NmMixin(object):
+    date_field = 'release_date'
+    make_object_list = True
+
+    def get_queryset(self):
+        self.newsroom = self.kwargs['newsroom']
+        return models.Article.objects.get_published().filter(newsroom__slug=self.kwargs['newsroom'])
+
+    def get_context_data(self, **kwargs):
+        context = super(NmMixin, self).get_context_data(**kwargs)
+        context['newsroom'] = self.kwargs['newsroom']
+        return context
+
+
+class NmYearArchive(NmMixin, YearArchiveView):
+    pass
+
+
+class NmMonthArchive(NmMixin, MonthArchiveView):
+    pass
+
+
+archive_year = NmYearArchive.as_view()
+archive_month = NmMonthArchive.as_view()
+
 
 def article_detail(request, newsroom, year, month, slug):
     request,
@@ -15,29 +42,6 @@ def article_detail(request, newsroom, year, month, slug):
     return shortcuts.render_to_response(
         'newscenter/article_detail.html', locals(),
         context_instance=template.RequestContext(request))
-
-def archive_year(request, newsroom, year):
-    room = models.Newsroom.objects.get(slug__exact=newsroom)
-    return date_based.archive_year(
-        request,
-        year = year,
-        date_field = 'release_date',
-        make_object_list = True,        
-        extra_context = {'newsroom': room},
-        queryset = models.Article.objects.get_published().filter(
-            newsroom__slug=newsroom)
-    )
-def archive_month(request, newsroom, year, month):
-    room = models.Newsroom.objects.get(slug__exact=newsroom)
-    return date_based.archive_month(
-        request,
-        year = year,
-        month = month,
-        date_field = 'release_date',
-        extra_context = {'newsroom': room},
-        queryset = models.Article.objects.get_published().filter(
-            newsroom__slug=newsroom)
-    )
 
 def category_detail(request, slug):
     category = models.Category.objects.get(slug__exact=slug)

@@ -1,15 +1,14 @@
 from datetime import datetime
 from django.conf.urls.defaults import *
 from newscenter.feeds import NewsroomFeed
+from django.views.generic.list import ListView
 
 from newscenter import models 
 
 ##Object List
-urlpatterns = patterns('django.views.generic.list_detail',
-    (r'^$', 'object_list', {'queryset': models.Newsroom.objects.all(), 
-        'allow_empty': True,}, 'newscenter_index'),
-    (r'^categories/$', 'object_list',
-        {'queryset': models.Category.objects.all(), 'allow_empty': True,})
+urlpatterns = patterns('',
+    url(r'^$', ListView.as_view(queryset=models.Newsroom.objects.all()), name='newscenter_index'),
+    url(r'^categories/$',  ListView.as_view(queryset=models.Newsroom.objects.all()), name='category_index')
 )
 
 ##Custom 
